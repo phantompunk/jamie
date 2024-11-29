@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "jamie"
+version = "0.1.0"
+description = ""
+authors = ["Rodrigo Moran <rigo.moran0@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+typer = "^0.14.0"
+yt-dlp = "^2024.11.18"
+torch = "^2.5.1"
+torchvision = "^0.20.1"
+torchaudio = "^2.5.1"
+onnxruntime = "1.19.2"
+
+[tool.poetry.scripts]
+jamie = "jamie.main:app"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
