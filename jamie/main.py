@@ -1,9 +1,10 @@
 from typing_extensions import Annotated
 import typer
-
+from jamie import filer
 from jamie.downloader import download_audio
 from jamie.splitter import split_audio
 from jamie.transcribe import process_audio
+
 
 app = typer.Typer()
 
@@ -26,7 +27,7 @@ def download(
     Download YouTube video as MP3
     """
     typer.echo("Downloading YouTube video")
-    download_audio([video_url],filename, output)
+    download_audio([video_url], filename, output)
 
 
 @app.command()
@@ -67,19 +68,27 @@ def merge():
 
 
 @app.command()
-def combine():
+def combine(
+    filename: str = typer.Argument(),
+):
     """
-    Shoot the portal gun
+    Combines multiple JSON file transcripts into a single JSON transcript.
     """
     typer.echo("Combining sequential spoken sections")
+    filer.combine_quotes(filename)
 
 
 @app.command()
-def enhance():
+def enhance(
+    filename: str = typer.Argument(),
+    episode: str = typer.Argument(),
+    link: str = typer.Argument(),
+):
     """
     Shoot the portal gun
     """
     typer.echo("Enhancing transcripts with meta data")
+    filer.enhance_quotes(filename, episode, link)
 
 
 @app.command()
