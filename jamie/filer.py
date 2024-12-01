@@ -6,7 +6,10 @@ from pathlib import Path
 from jamie.model import Quote
 
 
-def combine_quotes(pattern: str):
+def combine_quotes(pattern: str, output_dir: str = "./transcripts"):
+    if "*" not in pattern:
+        pattern += "*"
+
     combined = []
     files = glob(pattern)
     files.sort()
@@ -19,11 +22,14 @@ def combine_quotes(pattern: str):
 
     basename = Path(os.path.basename(pattern)).stem
     basename = basename.replace("*", "") + ".json"
-    with open(os.path.join("./transcripts", basename), "w") as output:
+    with open(os.path.join(output_dir, basename), "w") as output:
         json.dump(combined, output, indent=4)
 
 
 def enhance_quotes(filename: str, episode: str = "", link: str = ""):
+    if ".json" not in filename:
+        filename += ".json"
+
     with open(filename, "r+") as file:
         quotes = json.load(file)
         for quote in quotes:

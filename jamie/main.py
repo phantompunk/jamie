@@ -52,19 +52,41 @@ def transcribe(
     process_audio(filename)
 
 
-def diarize():
+@app.command()
+def process(
+    filename: str = typer.Argument(),
+    episode: str = typer.Argument(),
+    link: str = typer.Argument(),
+):
     """
     Shoot the portal gun
     """
     typer.echo("Shooting portal gun")
+    download_audio([link], filename)
+    split_audio(filename)
+    process_audio(filename)
+    combine(filename)
+    enhance(filename, episode, link)
+
+def process_video(
+    filename: str = typer.Argument(),
+    episode: str = typer.Argument(),
+    link: str = typer.Argument(),
+    filenamee: str = typer.Argument(),
+):
+    download_audio([link], filename)
+    split_audio(filename)
+    process_audio(filename)
+    combine(filename)
+    enhance(filename, episode, link)
 
 
-@app.command()
-def merge():
-    """
-    Shoot the portal gun
-    """
-    typer.echo("Merging transcription files")
+# @app.command()
+# def merge():
+#     """
+#     Shoot the portal gun
+#     """
+#     typer.echo("Merging transcription files")
 
 
 @app.command()
@@ -85,7 +107,7 @@ def enhance(
     link: str = typer.Argument(),
 ):
     """
-    Shoot the portal gun
+    Enhance quotes with metadata: episode, link
     """
     typer.echo("Enhancing transcripts with meta data")
     filer.enhance_quotes(filename, episode, link)

@@ -1,12 +1,15 @@
 import glob
 import json
 import os
+import jsonpickle
 
 from jamie.logger import logger
 from jamie.model import Quote
 
 
 def process_audio(pattern: str):
+    if "*" not in pattern:
+        pattern += "*"
     files = glob.glob(os.path.join("./splits", pattern), recursive=True)
     if not files:
         logger.info("No files matched the given pattern.")
@@ -20,7 +23,8 @@ def process_audio(pattern: str):
         segments = combine(results)
 
         logger.info(f"Writing segments to file: {filename}")
-        data = json.dumps(segments)
+        # data = json.dumps(segments, default=vars)
+        data = jsonpickle.encode(segments)
         with open(f"./segments/{filename}", "w") as file:
             file.write(data)
 
@@ -113,5 +117,5 @@ def combine(segments: list):
             buffer.append(quote)
 
     if buffer:
-        passages.append(dict(quote=" ".join(buffer), speaker=prev))
+        passages.append(Quote(quote=" ".join(buffer), speaker=prev))
     return passages
