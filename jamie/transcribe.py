@@ -23,8 +23,7 @@ def process_audio(pattern: str):
         segments = combine(results)
 
         logger.info(f"Writing segments to file: {filename}")
-        # data = json.dumps(segments, default=vars)
-        data = jsonpickle.encode(segments)
+        data = json.dumps([s.to_dict() for s in segments])
         with open(f"./segments/{filename}", "w") as file:
             file.write(data)
 
@@ -94,7 +93,7 @@ def diarize_audio(
     return result["segments"]
 
 
-def combine(segments: list):
+def combine(segments: list) -> list[Quote]:
     """
     Combines diarized speech segments into speaker-specific passages.
     """

@@ -1,10 +1,10 @@
-from typing_extensions import Annotated
 import typer
+from typing_extensions import Annotated
+
 from jamie import filer
 from jamie.downloader import download_audio
 from jamie.splitter import split_audio
 from jamie.transcribe import process_audio
-
 
 app = typer.Typer()
 
@@ -67,6 +67,7 @@ def process(
     process_audio(filename)
     combine(filename)
     enhance(filename, episode, link)
+
 
 def process_video(
     filename: str = typer.Argument(),

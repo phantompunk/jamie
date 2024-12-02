@@ -30,7 +30,7 @@ def enhance_quotes(filename: str, episode: str = "", link: str = ""):
     if ".json" not in filename:
         filename += ".json"
 
-    with open(filename, "r+") as file:
+    with open(os.path.join("./transcripts", filename), "r+") as file:
         quotes = json.load(file)
         for quote in quotes:
             quote.update(episode=episode, link=link)

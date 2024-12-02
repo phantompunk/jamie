@@ -1,6 +1,5 @@
 import os
 import yt_dlp
-import browser_cookie3
 
 
 def download_audio(urls: list[str], filename: str, output_dir: str = "./audio"):
