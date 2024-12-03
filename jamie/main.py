@@ -33,12 +33,13 @@ def download(
 @app.command()
 def split(
     filename: str = typer.Argument(),
+    segment_time:str = typer.Option() 
 ):
     """
-    Shoot the portal gun
+    Split YouTube audio file by duration (Default 5min)
     """
-    typer.echo("Splitting audio file into 5 minute chunks")
-    split_audio(filename)
+    typer.echo("Splitting audio file")
+    split_audio(filename, duration=segment_time)
 
 
 @app.command()
@@ -73,21 +74,12 @@ def process_video(
     filename: str = typer.Argument(),
     episode: str = typer.Argument(),
     link: str = typer.Argument(),
-    filenamee: str = typer.Argument(),
 ):
     download_audio([link], filename)
     split_audio(filename)
     process_audio(filename)
     combine(filename)
     enhance(filename, episode, link)
-
-
-# @app.command()
-# def merge():
-#     """
-#     Shoot the portal gun
-#     """
-#     typer.echo("Merging transcription files")
 
 
 @app.command()

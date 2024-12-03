@@ -13,12 +13,15 @@ def split_audio(
     duration: str = DURATION_5_MIN,
     extension: str = ".mp3",
 ):
+    if not duration:
+        duration = DURATION_5_MIN
+
     basename = Path(os.path.basename(filename)).stem
     # filename += ".mp3"
     command = [
         "ffmpeg",
         "-i",
-        os.path.join(output_dir, filename+extension),
+        os.path.join(output_dir, filename + extension),
         "-f",
         "segment",
         "-segment_time",
