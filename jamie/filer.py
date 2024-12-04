@@ -2,6 +2,7 @@ import json
 import os
 from glob import glob
 from pathlib import Path
+from datetime import datetime
 
 from jamie.model import Quote
 
@@ -33,7 +34,7 @@ def enhance_quotes(filename: str, episode: str = "", link: str = ""):
     with open(os.path.join("./transcripts", filename), "r+") as file:
         quotes = json.load(file)
         for quote in quotes:
-            quote.update(episode=episode, link=link)
+            quote.update(episode=episode, link=link, created=datetime.now().isoformat())
 
         file.seek(0)
         json.dump(quotes, file, indent=4)

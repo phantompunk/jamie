@@ -3,6 +3,7 @@ from typing_extensions import Annotated
 
 from jamie import filer
 from jamie.downloader import download_audio
+from jamie.scorer import score_quotes
 from jamie.splitter import split_audio
 from jamie.transcribe import process_audio
 
@@ -107,8 +108,11 @@ def enhance(
 
 
 @app.command()
-def score():
+def score(
+    filename: str = typer.Argument(),
+):
     """
-    Shoot the portal gun
+    WIP: Score quotes using custom LLM
     """
     typer.echo("Scoring transcripts using LLM")
+    score_quotes(filename)
