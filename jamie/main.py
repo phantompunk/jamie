@@ -20,7 +20,7 @@ def callback():
 @app.command()
 def download(
     video_url: str = typer.Argument(),
-    filename: str = typer.Argument(),
+    filename: str = typer.Option(),
     output: Annotated[str, typer.Argument()] = "./audio",
     extension: Annotated[str, typer.Argument()] = ".mp3",
 ):

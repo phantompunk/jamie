@@ -16,6 +16,7 @@ onnxruntime = "1.19.2"
 numpy = "1.26.4"
 ollama = "^0.4.2"
 jsonpickle = "^4.0.0"
+tqdm = "^4.67.1"
 
 [tool.poetry.scripts]
 jamie = "jamie.main:app"

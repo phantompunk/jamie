@@ -3,6 +3,7 @@ import json
 import ollama
 import os
 import re
+from tqdm import tqdm
 
 
 def extract_score(res: str):
@@ -13,9 +14,9 @@ def extract_score(res: str):
 
 def extract_quote(res: str):
     try:
-        return str(res)
+        return str(json.loads(res))
     except ValueError:
-        return re.sub(r"<(score|\/score)>", "", res)
+        return re.sub(r"<(score|\/score)>", "", json.loads(res))
 
 
 def score_quotes(filename: str):
@@ -25,7 +26,7 @@ def score_quotes(filename: str):
     with open(os.path.join("./transcripts", filename), "r+") as file:
         quotes = json.load(file)
 
-    for quote in quotes:
+    for quote in tqdm(quotes, desc="Scoring quotes"):
         response = ollama.generate(
             model="edit", prompt=json.dumps(quote["quote"]), stream=False
         )

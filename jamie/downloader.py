@@ -6,9 +6,13 @@ def download_audio(urls: list[str], filename: str, output_dir: str = "./audio"):
     if not output_dir:
         print("No output")
 
+    templ = os.path.join(output_dir, "%(title)s.%(ext)s")
+    if filename:
+        templ = os.path.join(output_dir, f"{filename}.%(ext)s")
+
     ydl_opts = {
         "format": "mp3/bestaudio/best",
-        "outtmpl": os.path.join(output_dir, f"{filename}.%(ext)s"),
+        "outtmpl": templ, 
         "postprocessors": [
             {
                 "key": "FFmpegExtractAudio",
