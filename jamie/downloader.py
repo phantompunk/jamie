@@ -1,18 +1,29 @@
 import os
+from typing import Optional
 import yt_dlp
 
+EXTENSION_DEFAULT = "mp3"
+EXTENSION_MP3 = "mp3/bestaudio/best"
 
-def download_audio(urls: list[str], filename: str, output_dir: str = "./audio"):
-    if not output_dir:
-        print("No output")
+FILENAME_TEMPLATE = "./audio/%(title)s.%(ext)s"
 
-    templ = os.path.join(output_dir, "%(title)s.%(ext)s")
-    if filename:
-        templ = os.path.join(output_dir, f"{filename}.%(ext)s")
+def extension(format:str):
+    if format.lower() in [".mp3","mp3"]:
+        return EXTENSION_MP3
+    return EXTENSION_MP3
+
+def download_audio(
+    url: str,
+    output: Optional[str] = FILENAME_TEMPLATE,
+    format: str = EXTENSION_DEFAULT,
+):
+    # templ = os.path.join(output_dir, "%(title)s.%(ext)s")
+    # if filename:
+    #     templ = os.path.join(output_dir, f"{filename}.%(ext)s")
 
     ydl_opts = {
-        "format": "mp3/bestaudio/best",
-        "outtmpl": templ, 
+        "format": extension(format),
+        "outtmpl": output,
         "postprocessors": [
             {
                 "key": "FFmpegExtractAudio",
@@ -24,4 +35,4 @@ def download_audio(urls: list[str], filename: str, output_dir: str = "./audio"):
     ydl_opts["cookiefile"] = "cookies.txt"
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        _ = ydl.download(urls)
+        _ = ydl.download(url)
