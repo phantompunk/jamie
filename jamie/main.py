@@ -1,3 +1,4 @@
+from typing import Optional
 import typer
 from typing_extensions import Annotated
 
@@ -19,16 +20,15 @@ def callback():
 
 @app.command()
 def download(
-    video_url: str = typer.Argument(),
-    filename: str = typer.Option(),
-    output: Annotated[str, typer.Argument()] = "./audio",
-    extension: Annotated[str, typer.Argument()] = ".mp3",
+    url: str = typer.Argument(),
+    filename: Annotated[Optional[str], typer.Option()] = None,
+    extension: Annotated[str, typer.Option()] = ".mp3",
 ):
     """
-    Download YouTube video as MP3
+    Download YouTube video
     """
     typer.echo("Downloading YouTube video")
-    download_audio([video_url], filename, output)
+    download_audio(url, filename, extension)
 
 
 @app.command()
@@ -110,9 +110,11 @@ def enhance(
 @app.command()
 def score(
     filename: str = typer.Argument(),
+    model: Annotated[str, typer.Argument()] = "quote",
+    # model: str = typer.Option(default="quote"),
 ):
     """
     WIP: Score quotes using custom LLM
     """
     typer.echo("Scoring transcripts using LLM")
-    score_quotes(filename)
+    score_quotes(filename, model)
