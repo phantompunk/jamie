@@ -53,6 +53,7 @@ def transcribe(
     """
     typer.echo("Transcribing audio file")
     process_audio(filename)
+    typer.echo("Completed transcribing audio file")
 
 
 @app.command()

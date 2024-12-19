@@ -4,7 +4,7 @@ import yt_dlp
 
 EXTENSION_DEFAULT = "mp3"
 EXTENSION_MP3 = "mp3/bestaudio/best"
-FILENAME_TEMPLATE = "./audio/%(title)s.%(ext)s"
+FILENAME_TEMPLATE = "%(title)s.%(ext)s"
 
 
 def extension(format: str):

@@ -1,22 +1,37 @@
 import glob
 import json
 import os
-import jsonpickle
+import re
+from pathlib import Path
+
 
 from jamie.logger import logger
 from jamie.model import Quote
 
 
+def remove_yt_id(text):
+    pattern = r"\[[a-zA-Z0-9]{11}\]"
+    return re.sub(pattern, "", text)
+
+
 def process_audio(pattern: str):
+    path = Path(remove_yt_id(pattern))
+    if "*" not in pattern and path.suffix in [".mp3"]:
+        pattern = f"{path.stem}*"
     if "*" not in pattern:
         pattern += "*"
-    files = glob.glob(os.path.join("./splits", pattern), recursive=True)
+
+    # determine if pattern is a glob or split
+    files = glob.glob(pattern, recursive=True)
     if not files:
         logger.info("No files matched the given pattern.")
+    if not files and path.is_file():
+        logger.info("Only the main file matched the given pattern.")
+        files = [path.as_posix()]
 
     for file in files:
         logger.info(f"Processing audio file: {file}")
-        filename = os.path.basename(file).replace(".mp3", ".json")
+        filename = f"{Path(file).stem}.json"
         audio = load_audio(file)
         results = transcribe_audio(audio)
         results = diarize_audio(audio, results)
