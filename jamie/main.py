@@ -34,13 +34,14 @@ def download(
 @app.command()
 def split(
     filename: str = typer.Argument(),
-    segment_time:str = typer.Option() 
+    duration:str = typer.Option(),
 ):
     """
     Split YouTube audio file by duration (Default 5min)
     """
     typer.echo("Splitting audio file")
-    split_audio(filename, duration=segment_time)
+    split_audio(filename, duration=duration)
+    typer.echo(f"Completed splitting file '{filename}'")
 
 
 @app.command()

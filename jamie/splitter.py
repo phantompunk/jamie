@@ -3,34 +3,43 @@ import subprocess
 from pathlib import Path
 from jamie.logger import logger
 
-
+SPLITNAME_TEMPLATE = "-%03d"
 DURATION_5_MIN = "300"
 
 
 def split_audio(
-    filename,
+    filename: str,
+    output: str = SPLITNAME_TEMPLATE,
     output_dir: str = "./audio/splits",
     duration: str = DURATION_5_MIN,
     extension: str = ".mp3",
 ):
-    if not duration:
-        duration = DURATION_5_MIN
+    """
+    Split an audio file into segments of a given duration using FFMPEG
+    """
 
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+    # TODO Validate duration input
+    # Check existence of file
+    path = Path(filename)
+    if not path.exists():
+        raise FileNotFoundError(f"File '{filename}' not found.")
 
-    basename = Path(os.path.basename(filename)).stem
+    if not path.is_file():
+        raise IsADirectoryError(f"File '{filename}' is not a file.")
+
+    # TODO Define output location
+
     command = [
         "ffmpeg",
         "-i",
-        os.path.join("./audio", filename + extension),
+        path.as_posix(),
         "-f",
         "segment",
         "-segment_time",
         duration,
         "-c",
         "copy",
-        os.path.join(output_dir, basename) + "-%03d.mp3",
+        f"{path.stem}{SPLITNAME_TEMPLATE}{extension}",
     ]
 
     subprocess.run(command, check=True)

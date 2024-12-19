@@ -4,13 +4,14 @@ import yt_dlp
 
 EXTENSION_DEFAULT = "mp3"
 EXTENSION_MP3 = "mp3/bestaudio/best"
-
 FILENAME_TEMPLATE = "./audio/%(title)s.%(ext)s"
 
-def extension(format:str):
-    if format.lower() in [".mp3","mp3"]:
+
+def extension(format: str):
+    if format.lower() in [".mp3", "mp3"]:
         return EXTENSION_MP3
     return EXTENSION_MP3
+
 
 def download_audio(
     url: str,
