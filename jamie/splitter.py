@@ -1,7 +1,5 @@
-import os
 import subprocess
 from pathlib import Path
-from jamie.logger import logger
 
 SPLITNAME_TEMPLATE = "-%03d"
 DURATION_5_MIN = "300"

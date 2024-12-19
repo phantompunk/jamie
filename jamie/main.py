@@ -112,7 +112,7 @@ def enhance(
 @app.command()
 def score(
     filename: str = typer.Argument(),
-    model: Annotated[str, typer.Argument()] = "quote",
+    model: Annotated[str, typer.Option()] = "quote",
     # model: str = typer.Option(default="quote"),
 ):
     """
@@ -120,3 +120,4 @@ def score(
     """
     typer.echo("Scoring transcripts using LLM")
     score_quotes(filename, model)
+    typer.echo("Completed scoring transcripts")

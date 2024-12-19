@@ -39,7 +39,7 @@ def process_audio(pattern: str):
 
         logger.info(f"Writing segments to file: {filename}")
         data = json.dumps([s.to_dict() for s in segments])
-        with open(f"./segments/{filename}", "w") as file:
+        with open(f"./{filename}", "w") as file:
             file.write(data)
 
 
