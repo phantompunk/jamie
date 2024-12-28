@@ -105,6 +105,10 @@ def diarize_audio(
     )
     result = whisperx.assign_word_speakers(diarize_segments, result)
 
+    # print(result)
+    # with open("test-segment.json", "w+") as file:
+    #     json.dump(result, file)
+
     return result["segments"]
 
 
@@ -115,21 +119,24 @@ def combine(segments: list) -> list[Quote]:
     words = [w for s in segments for w in s.get("words", [])]
 
     prev = ""
+    start = 0
     passages, buffer = [], []
     for word in words:
         quote = word.get("word")
         speaker = word.get("speaker", "")
         if len(prev) == 0:
+            start = int(word.get("start", "0"))
             prev = speaker
             buffer.append(quote)
         elif prev != speaker:
-            passages.append(Quote(quote=" ".join(buffer), speaker=prev))
+            passages.append(Quote(quote=" ".join(buffer), speaker=prev, start=start))
             buffer.clear()
             buffer.append(quote)
             prev = speaker
+            start = int(word.get("start","0"))
         else:
             buffer.append(quote)
 
     if buffer:
-        passages.append(Quote(quote=" ".join(buffer), speaker=prev))
+        passages.append(Quote(quote=" ".join(buffer), speaker=prev, start=start))
     return passages
