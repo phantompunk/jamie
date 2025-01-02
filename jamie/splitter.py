@@ -8,7 +8,7 @@ DURATION_5_MIN = "300"
 def split_audio(
     filename: str,
     output: str = SPLITNAME_TEMPLATE,
-    output_dir: str = "./audio/splits",
+    output_dir: str = ".",
     duration: str = DURATION_5_MIN,
     extension: str = ".mp3",
 ):
@@ -18,6 +18,8 @@ def split_audio(
 
     # TODO Validate duration input
     # Check existence of file
+    if extension not in filename:
+        filename += extension
     path = Path(filename)
     if not path.exists():
         raise FileNotFoundError(f"File '{filename}' not found.")

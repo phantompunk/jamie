@@ -4,10 +4,8 @@ from glob import glob
 from pathlib import Path
 from datetime import datetime
 
-from jamie.model import Quote
 
-
-def combine_quotes(pattern: str, output_dir: str = "./transcripts"):
+def combine_quotes(pattern: str, output_dir: str = "./"):
     if "*" not in pattern:
         pattern += "*"
 
@@ -31,7 +29,7 @@ def enhance_quotes(filename: str, episode: str = "", link: str = ""):
     if ".json" not in filename:
         filename += ".json"
 
-    with open(os.path.join("./transcripts", filename), "r+") as file:
+    with open(os.path.join("./", filename), "w+") as file:
         quotes = json.load(file)
         for quote in quotes:
             quote.update(episode=episode, link=link, created=datetime.now().isoformat())

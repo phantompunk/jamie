@@ -14,7 +14,7 @@ def remove_yt_id(text):
     return re.sub(pattern, "", text)
 
 
-def process_audio(pattern: str):
+def process_audio(pattern: str, duration:str="300"):
     path = Path(remove_yt_id(pattern))
     if "*" not in pattern and path.suffix in [".mp3"]:
         pattern = f"{path.stem}*"
@@ -29,13 +29,14 @@ def process_audio(pattern: str):
         logger.info("Only the main file matched the given pattern.")
         files = [path.as_posix()]
 
-    for file in files:
+    for segment, file in enumerate(files):
         logger.info(f"Processing audio file: {file}")
         filename = f"{Path(file).stem}.json"
         audio = load_audio(file)
         results = transcribe_audio(audio)
         results = diarize_audio(audio, results)
-        segments = combine(results)
+        start_at = segment * int(duration)
+        segments = combine(results, start_at)
 
         logger.info(f"Writing segments to file: {filename}")
         data = json.dumps([s.to_dict() for s in segments])
@@ -112,7 +113,7 @@ def diarize_audio(
     return result["segments"]
 
 
-def combine(segments: list) -> list[Quote]:
+def combine(segments: list, start_at:int=0) -> list[Quote]:
     """
     Combines diarized speech segments into speaker-specific passages.
     """
@@ -129,7 +130,7 @@ def combine(segments: list) -> list[Quote]:
             prev = speaker
             buffer.append(quote)
         elif prev != speaker:
-            passages.append(Quote(quote=" ".join(buffer), speaker=prev, start=start))
+            passages.append(Quote(quote=" ".join(buffer), speaker=prev, start=start+start_at))
             buffer.clear()
             buffer.append(quote)
             prev = speaker
@@ -138,5 +139,5 @@ def combine(segments: list) -> list[Quote]:
             buffer.append(quote)
 
     if buffer:
-        passages.append(Quote(quote=" ".join(buffer), speaker=prev, start=start))
+        passages.append(Quote(quote=" ".join(buffer), speaker=prev, start=start+start_at))
     return passages
