@@ -1,5 +1,3 @@
-from typing import Optional
-
 import typer
 from typing_extensions import Annotated
 
@@ -14,30 +12,25 @@ app = typer.Typer()
 
 @app.command()
 def download(
-    url: str = typer.Argument(help="YouTube video url"),
-    name: Annotated[
-        Optional[str], typer.Option(default=None,help="Optional name for the downloaded file")
-    ],
-    extension: Annotated[
-        str,
-        typer.Option(
-        default=".mp3",
-            case_sensitive=False,
-            show_choices=True,
-        ),
-    ],
+    url: Annotated[str, typer.Argument(help="Required YouTube video url")],
+    name: Annotated[str, typer.Option(help="Name for the downloaded audio file")] = "",
+    format: Annotated[str, typer.Option(help="Audio file type (mp3, m4a)")] = "mp3",
 ):
     """
     Download audio from YouTube
     """
     typer.echo("Downloading YouTube video")
-    download_audio(url, name, extension)
+    download_audio(url, name, format)
+    typer.echo("Completed YouTube video")
 
 
 @app.command()
 def split(
-    filename: str = typer.Argument(),
-    duration: str = typer.Option(),
+    filename: str = typer.Argument(help="Audio file to split"),
+    duration: Annotated[
+        str,
+        typer.Option(help="Duration in seconds to split audio files by (default=300s)"),
+    ] = "300",
 ):
     """
     Split YouTube audio file by duration (Default 5min)
@@ -52,7 +45,7 @@ def transcribe(
     filename: str = typer.Argument(),
 ):
     """
-    Shoot the portal gun
+    Transcribe an audio file
     """
     typer.echo("Transcribing audio file")
     process_audio(filename)
@@ -68,7 +61,7 @@ def process(
     duration: str = typer.Option(default="300"),
 ):
     """
-    Shoot the portal gun
+    Download, split, transcribe, combine and enhance YouTube video
     """
     typer.echo(f"Processing video url {link}")
     download_audio(link, name, extension)
@@ -76,6 +69,7 @@ def process(
     process_audio(name, duration=duration)
     combine(name)
     enhance(name, episode, link)
+    typer.echo("Completed processing transcripts")
 
 
 @app.command()
@@ -87,6 +81,7 @@ def combine(
     """
     typer.echo("Combining sequential spoken sections")
     filer.combine_quotes(filename)
+    typer.echo("Completed combining transcripts")
 
 
 @app.command()
@@ -100,6 +95,7 @@ def enhance(
     """
     typer.echo("Enhancing transcripts with meta data")
     filer.enhance_quotes(filename, episode, link)
+    typer.echo("Completed enhancing transcripts")
 
 
 @app.command()
