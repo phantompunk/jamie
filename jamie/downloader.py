@@ -23,15 +23,21 @@ def download_audio_with_duration(
     output: Optional[str],
     format: Optional[str],
 ):
-    """Downloads audio from a YouTube video URL and returns the filename and duration in seconds."""
-    return download_audio(url, output, format, True)
+    """Downloads audio from a YouTube video URL and returns the filename and length in seconds."""
+    return download_audio(url, output, format)
 
+def download_audio_with_filename(
+    url: str,
+    output: Optional[str],
+    format: Optional[str],
+):
+    """Downloads audio from a YouTube video URL and returns the filename."""
+    return download_audio(url, output, format)[0]
 
 def download_audio(
     url: str,
     output: Optional[str],
     format: Optional[str],
-    return_duration: bool = False,
 ):
     """Downloads audio from a YouTube video URL and returns the filename."""
 
@@ -63,8 +69,11 @@ def download_audio(
         info_dict = ydl.extract_info(url, download=False)
         info = ydl.sanitize_info(info_dict)
         filename = ydl.prepare_filename(info)
+        if ".mp3" not in filename or ".m4a" not in filename:
+            filename = f"{filename}.{format}"
         ydl.download([url])
-        if return_duration and info_dict:
-            duration: int = info_dict.get("duration", None)
-            return filename, duration
-        return filename
+
+        length: float = 0.0
+        if info and type(info) is dict:
+            length = info.get("duration", None)
+        return filename, length
