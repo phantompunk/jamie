@@ -3,6 +3,7 @@ import json
 import os
 import re
 from pathlib import Path
+from tqdm import tqdm
 
 
 from jamie.logger import logger
@@ -14,34 +15,69 @@ def remove_yt_id(text):
     return re.sub(pattern, "", text)
 
 
-def process_audio(pattern: str, duration:str="300"):
-    path = Path(remove_yt_id(pattern))
-    if "*" not in pattern and path.suffix in [".mp3"]:
-        pattern = f"{path.stem}*"
-    if "*" not in pattern:
-        pattern += "*"
+def extract_number(filename):
+    match = re.search(r"-(\d{3})\.", filename)
+    if match:
+        return int(match.group(1))
+    return 0
 
-    # determine if pattern is a glob or split
-    files = glob.glob(pattern, recursive=True)
-    if not files:
-        logger.info("No files matched the given pattern.")
-    if not files and path.is_file():
-        logger.info("Only the main file matched the given pattern.")
-        files = [path.as_posix()]
 
-    for segment, file in enumerate(files):
+def is_glob(pattern) -> bool:
+    if any(char in pattern for char in ["*", "[", "]", "?"]):
+        matched = glob.glob(pattern, recursive=True)
+        return True if matched else False
+    return False
+
+
+def is_file(filepath) -> bool:
+    if os.path.isfile(filepath):
+        return True
+    return False
+
+
+def is_list(files) -> bool:
+    if type(files) is list:
+        return True
+    return False
+
+
+def process_audio(pattern: str, duration: int = 300):
+    # determine if pattern is a file, list of files or glob
+    if is_glob(pattern):
+        files = glob.glob(pattern, recursive=True)
+        files.sort()
+    elif is_file(pattern):
+        files = [pattern]
+    else:
+        raise ValueError("error")
+
+    if not os.getenv("HUGGINGFACE_TOKEN"):
+        raise EnvironmentError(
+            "Required environment variable 'HUGGINGFACE_TOKEN' is not set."
+        )
+
+    datafile = ""
+    data = []
+    for file in tqdm(files, desc="Transcribing audio files"):
         logger.info(f"Processing audio file: {file}")
-        filename = f"{Path(file).stem}.json"
+        path = Path(file)
+        filename = f"{path.stem}.json"
         audio = load_audio(file)
         results = transcribe_audio(audio)
         results = diarize_audio(audio, results)
-        start_at = segment * int(duration)
+        start_at = extract_number(filename) * int(duration)
         segments = combine(results, start_at)
+        # # logger.info(f"Writing segments to file: {filename}")
+        # data.extend([s.to_dict() for s in segments])
+        data.extend(segments)
+        if not datafile:
+            datafile = path.stem[:-4]
 
-        logger.info(f"Writing segments to file: {filename}")
-        data = json.dumps([s.to_dict() for s in segments])
-        with open(f"./{filename}", "w") as file:
-            file.write(data)
+    newfile = f"./{datafile}.json"
+    sdata = [s.to_dict() for s in data]
+    with open(newfile, "w") as file:
+        json.dump(sdata, file, indent=4)
+    return newfile
 
 
 def load_audio(file):
@@ -61,9 +97,6 @@ def transcribe_audio(
     Transcribes audio using the WhisperX model.
     """
     import whisperx
-    # device = "cpu"
-    # batch_size = 5  # reduce if low on GPU mem
-    # compute_type = "int8"  # change to "int8" if low on GPU mem (may reduce accuracy)
 
     model = whisperx.load_model(
         "large-v2",
@@ -96,7 +129,6 @@ def diarize_audio(
     Diarizes a given audio file and updates the provided transcript with speaker information.
     """
     import whisperx
-    # logger.info(f"Diarizing: {filename}"
 
     diarize_model = whisperx.DiarizationPipeline(
         use_auth_token=os.environ["HUGGINGFACE_TOKEN"], device=device
@@ -106,14 +138,10 @@ def diarize_audio(
     )
     result = whisperx.assign_word_speakers(diarize_segments, result)
 
-    # print(result)
-    # with open("test-segment.json", "w+") as file:
-    #     json.dump(result, file)
-
     return result["segments"]
 
 
-def combine(segments: list, start_at:int=0) -> list[Quote]:
+def combine(segments: list, start_at: int = 0) -> list[Quote]:
     """
     Combines diarized speech segments into speaker-specific passages.
     """
@@ -130,14 +158,18 @@ def combine(segments: list, start_at:int=0) -> list[Quote]:
             prev = speaker
             buffer.append(quote)
         elif prev != speaker:
-            passages.append(Quote(quote=" ".join(buffer), speaker=prev, start=start+start_at))
+            passages.append(
+                Quote(quote=" ".join(buffer), speaker=prev, start=start + start_at)
+            )
             buffer.clear()
             buffer.append(quote)
             prev = speaker
-            start = int(word.get("start","0"))
+            start = int(word.get("start", "0"))
         else:
             buffer.append(quote)
 
     if buffer:
-        passages.append(Quote(quote=" ".join(buffer), speaker=prev, start=start+start_at))
+        passages.append(
+            Quote(quote=" ".join(buffer), speaker=prev, start=start + start_at)
+        )
     return passages

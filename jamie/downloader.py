@@ -57,6 +57,7 @@ def download_audio(
         "noplaylists": True,
         "outtmpl": output,
         "verbose": True,
+        "loglevel": "ERROR",
         "postprocessors": [
             {  # Extract audio using ffmpeg
                 "key": "FFmpegExtractAudio",
