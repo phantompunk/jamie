@@ -74,7 +74,6 @@ def process(
     """
     typer.echo(f"Processing video url {url}")
     filename, length = download_audio(url, name, extension)
-    print("Downloaded: ", filename)
     split_audio(filename, duration=duration, length=length)
     gbname = f"{Path(filename).stem}-*.{extension}"
     newfile = process_audio(gbname, duration=duration)
@@ -108,7 +107,7 @@ def enhance(
     Enhance quotes with metadata: episode, link
     """
     typer.echo("Enhancing transcripts with meta data")
-    filer.enhance_quotes(filename, episode, url, speaker0, speaker1, speaker2)
+    filer.enhance_quotes(filename, url, episode, speaker0, speaker1, speaker2)
     typer.echo("Completed enhancing transcripts")
 
 

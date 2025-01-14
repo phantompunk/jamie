@@ -2,7 +2,6 @@ import json
 import os
 from glob import glob
 from pathlib import Path
-from datetime import datetime
 from typing import Optional
 
 
@@ -28,8 +27,8 @@ def combine_quotes(pattern: str, output_dir: str = "./"):
 
 def enhance_quotes(
     filename: str,
-    link: Optional[str],
-    episode: Optional[str],
+    link: Optional[str]=None,
+    episode: Optional[str]=None,
     speaker0: Optional[str] = None,
     speaker1: Optional[str] = None,
     speaker2: Optional[str]=None,
@@ -37,6 +36,12 @@ def enhance_quotes(
     try:
         with open(filename, "r+", encoding="utf-8") as infile:
             quotes = json.load(infile)
+
+        first = quotes[0]
+        if not link:
+            link = first.get("link", "")
+        if not episode:
+            episode = first.get("episode", "")
 
         for quote in quotes:
             speaker = quote.get("speaker")
