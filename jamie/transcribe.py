@@ -138,6 +138,9 @@ def diarize_audio(
     )
     result = whisperx.assign_word_speakers(diarize_segments, result)
 
+    # with open("diar.json", "w") as test:
+    #     json.dump(result, test, indent=4)
+    #
     return result["segments"]
 
 

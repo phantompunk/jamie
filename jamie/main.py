@@ -89,8 +89,22 @@ def combine(
     """
     Combines multiple JSON file transcripts into a single JSON transcript.
     """
-    typer.echo("Combining sequential spoken sections")
+    typer.echo("Combining multiple JSON files together.")
+    # quotes = filer.read_json(filename)
+    # quotes = filer.combine(quotes)
+    # filer.write_json(filename, quotes)
     filer.combine_quotes(filename)
+    typer.echo("Completed combining multiple JSON files.")
+
+@app.command()
+def merge(
+    filename: Annotated[str, typer.Argument(help=HELP_NAME)],
+):
+    """
+    Combine consecutive passages by the same speaker.
+    """
+    typer.echo("Combining sequential spoken sections")
+    filer.merge(filename)
     typer.echo("Completed combining transcripts")
 
 
@@ -107,7 +121,8 @@ def enhance(
     Enhance quotes with metadata: episode, link
     """
     typer.echo("Enhancing transcripts with meta data")
-    filer.enhance_quotes(filename, url, episode, speaker0, speaker1, speaker2)
+    # filer.enhance_quotes(filename, url, episode, speaker0, speaker1, speaker2)
+    filer.enhance(filename, url, episode, speaker0, speaker1, speaker2)
     typer.echo("Completed enhancing transcripts")
 
 
