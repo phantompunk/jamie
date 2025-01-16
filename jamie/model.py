@@ -1,4 +1,4 @@
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 import json
 from datetime import datetime
 import hashlib
@@ -7,27 +7,17 @@ from typing import Dict, Optional
 
 @dataclass
 class Quote:
-    def __init__(
-        self,
-        quote: str,
-        speaker: str,
-        id: str,
-        created: str,
-        episode: str = "",
-        link: str = "",
-        start: int = 0,
-    ):
-        self.quote = quote
-        self.speaker = speaker
-        self.episode = episode
-        self.link = link
-        self.id = id if id else hashlib.md5(quote.encode()).hexdigest()[:6]
-        self.created = created if created else datetime.now().isoformat()
-        self.start = start
+    id: str = field(default="", init=False)
+    quote: str
+    speaker: str
+    start: int
+    link: str = ""
+    episode: str = ""
+    created: datetime = field(default_factory=datetime.now) 
 
-    def update(self, speakers: dict, **kwargs):
-        speaker = speakers.get(self.speaker)
-        return replace(self, speaker=speaker, **kwargs)
+    def __post_init__(self):
+        if not self.id:
+            self.id = hashlib.md5(self.quote.encode()).hexdigest()[:6]
 
     def to_dict(self):
         return {
@@ -37,18 +27,20 @@ class Quote:
             "link": self.link,
             "id": self.id,
             "start": self.start,
-            "created": self.created,
+            "created": self.created.isoformat(),
         }
 
     @classmethod
     def from_dict(cls, item: Dict) -> "Quote":
+        # created = datetime.fromisoformat(item.get("created", None))
+        # return cls(**item, created=created)
         return cls(
             quote=item["quote"],
             speaker=item["speaker"],
             episode=item["episode"],
             link=item["link"],
-            id=item["id"],
-            created=item["created"],
+            start=item["start"],
+            created=datetime.fromisoformat(item.get("created", None)),
         )
 
     @staticmethod
@@ -56,28 +48,30 @@ class Quote:
         return json.dumps([quote.to_dict() for quote in quotes], indent=4)
 
     @staticmethod
+    def combine(quotes: list["Quote"], current: "Quote") -> list["Quote"]:
+        if quotes and quotes[-1].speaker == current.speaker:
+            quotes[-1].quote += " " + current.quote
+        else:
+            quotes.append(current)
+        return quotes
+
+    @staticmethod
     def update_speaker(
-        quote: "Quote",
-        speaker_map: dict,
-        episode: Optional[str],
-        link: Optional[str],
+        item: "Quote", speaker_map: dict, episode: Optional[str], link: Optional[str]
     ) -> "Quote":
-        speaker = speaker_map.get(quote.speaker)
-        data = quote.__dict__.copy()
-        data.update(speaker=speaker)
-        if episode:
-            data.update(episode=episode)
-        if link:
-            data.update(link=link)
-        return Quote(**data)
-
-
-def parse_quote(item: dict) -> Quote:
-    return Quote(
-        quote=item["quote"],
-        speaker=item["speaker"],
-        episode=item["episode"],
-        link=item["link"],
-        id=item["id"],
-        created=item["created"],
-    )
+        speaker = speaker_map.get(item.speaker, item.speaker)
+        # up = {
+        #     "quote":item.quote,
+        #     "speaker":speaker,
+        #     "start":item.start,
+        #     "created":item.created,
+        #     "episode": episode if episode else item.episode,
+        #     "link": link if link else item.link,
+        # }
+        updated = {
+            **item.to_dict(),
+            "speaker": speaker,
+            **({"episode": episode} if episode else {}),
+            **({"link": link} if link else {}),
+        }
+        return Quote(**updated)
