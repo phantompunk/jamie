@@ -5,7 +5,7 @@ import typer
 from typing_extensions import Annotated
 
 from jamie import filer
-from jamie.downloader import download_audio 
+from jamie.downloader import download_audio
 from jamie.scorer import score_quotes
 from jamie.splitter import split_audio
 from jamie.transcribe import process_audio
@@ -66,8 +66,8 @@ def process(
     url: Annotated[str, typer.Argument(help=HELP_URL)],
     duration: Annotated[int, typer.Option(help=HELP_DURATION)] = 300,
     name: Annotated[Optional[str], typer.Option(help=HELP_NAME)] = "",
-    episode: Annotated[Optional[str], typer.Option(help=HELP_EPISODE)] = "",
     extension: Annotated[Optional[str], typer.Option(help=HELP_FORMAT)] = "mp3",
+    episode: Annotated[Optional[str], typer.Option(help=HELP_EPISODE)] = None,
 ):
     """
     Download, split, transcribe, combine and enhance YouTube video
@@ -78,23 +78,9 @@ def process(
     gbname = f"{Path(filename).stem}-*.{extension}"
     newfile = process_audio(gbname, duration=duration)
     # combine(name)
-    filer.enhance_quotes(newfile, url, episode)
+    filer.enhance(newfile, url, episode)
     typer.echo("Completed processing transcripts")
 
-
-@app.command()
-def combine(
-    filename: Annotated[str, typer.Argument(help=HELP_NAME)],
-):
-    """
-    Combines multiple JSON file transcripts into a single JSON transcript.
-    """
-    typer.echo("Combining multiple JSON files together.")
-    # quotes = filer.read_json(filename)
-    # quotes = filer.combine(quotes)
-    # filer.write_json(filename, quotes)
-    filer.combine_quotes(filename)
-    typer.echo("Completed combining multiple JSON files.")
 
 @app.command()
 def merge(
@@ -121,7 +107,6 @@ def enhance(
     Enhance quotes with metadata: episode, link
     """
     typer.echo("Enhancing transcripts with meta data")
-    # filer.enhance_quotes(filename, url, episode, speaker0, speaker1, speaker2)
     filer.enhance(filename, url, episode, speaker0, speaker1, speaker2)
     typer.echo("Completed enhancing transcripts")
 

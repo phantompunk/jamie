@@ -51,6 +51,7 @@ def split_audio(
 
     chunks = int(length // duration) + 1
     names = [f"{output_dir}/{path.stem}-{i:03d}{extension}" for i in range(chunks)]
+    globname = f"{output_dir}/{path.stem}-*{extension}" 
 
     command = [
         "ffmpeg",

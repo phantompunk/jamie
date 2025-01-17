@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field 
 import json
 from datetime import datetime
 import hashlib
@@ -32,8 +32,6 @@ class Quote:
 
     @classmethod
     def from_dict(cls, item: Dict) -> "Quote":
-        # created = datetime.fromisoformat(item.get("created", None))
-        # return cls(**item, created=created)
         return cls(
             quote=item["quote"],
             speaker=item["speaker"],
@@ -60,18 +58,12 @@ class Quote:
         item: "Quote", speaker_map: dict, episode: Optional[str], link: Optional[str]
     ) -> "Quote":
         speaker = speaker_map.get(item.speaker, item.speaker)
-        # up = {
-        #     "quote":item.quote,
-        #     "speaker":speaker,
-        #     "start":item.start,
-        #     "created":item.created,
-        #     "episode": episode if episode else item.episode,
-        #     "link": link if link else item.link,
-        # }
         updated = {
-            **item.to_dict(),
-            "speaker": speaker,
-            **({"episode": episode} if episode else {}),
-            **({"link": link} if link else {}),
+            "quote":item.quote,
+            "speaker":speaker,
+            "start":item.start,
+            "created":item.created,
+            "episode": episode if episode else item.episode,
+            "link": link if link else item.link,
         }
         return Quote(**updated)

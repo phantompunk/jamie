@@ -41,7 +41,10 @@ def is_list(files) -> bool:
     return False
 
 
-def process_audio(pattern: str, duration: int = 300):
+def process_audio(
+    pattern: str,
+    duration: int = 300,
+):
     # determine if pattern is a file, list of files or glob
     if is_glob(pattern):
         files = glob.glob(pattern, recursive=True)
@@ -67,8 +70,7 @@ def process_audio(pattern: str, duration: int = 300):
         results = diarize_audio(audio, results)
         start_at = extract_number(filename) * int(duration)
         segments = combine(results, start_at)
-        # # logger.info(f"Writing segments to file: {filename}")
-        # data.extend([s.to_dict() for s in segments])
+
         data.extend(segments)
         if not datafile:
             datafile = path.stem[:-4]
@@ -138,10 +140,11 @@ def diarize_audio(
     )
     result = whisperx.assign_word_speakers(diarize_segments, result)
 
-    # with open("diar.json", "w") as test:
-    #     json.dump(result, test, indent=4)
-    #
     return result["segments"]
+
+
+def extract_words(segments: list):
+    return [w for s in segments for w in s.get("words", [])]
 
 
 def combine(segments: list, start_at: int = 0) -> list[Quote]:
