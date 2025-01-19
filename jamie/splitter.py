@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 from mutagen.mp3 import MP3
 from mutagen.m4a import M4A
+from mutagen.wave import WAVE
 
 
 SPLITNAME_TEMPLATE = "-%03d"
@@ -14,9 +15,11 @@ def get_audio_length(path: Path) -> int:
         audio = MP3(path.as_posix())
     elif path.suffix == ".m4a":
         audio = M4A(path.as_posix())
+    elif path.suffix == ".wav":
+        audio = WAVE(path.as_posix())
     else:
         raise ValueError("Unsupported file format. Only mp3 and m4a are supported.")
-    return audio.info.length if audio.info else 0
+    return int(audio.info.length) if audio.info else 0
 
 
 def split_audio(
@@ -25,7 +28,7 @@ def split_audio(
     output_dir: str = ".",
     duration: Optional[int] = DEFAULT_DURATION_SECONDS,
     length: Optional[float] = None,
-) -> Tuple[List[str], int]:
+) -> str:
     """
     Split an audio file into segments of a given duration using FFMPEG
     """
@@ -40,7 +43,7 @@ def split_audio(
         raise IsADirectoryError(f"File '{filename}' is not a file.")
 
     extension = path.suffix
-    if extension not in [".mp3", ".m4a"]:
+    if extension not in [".mp3", ".m4a", ".wav"]:
         raise ValueError("Unsupported file format. Only mp3 and m4a are supported.")
 
     if duration is None:
@@ -49,9 +52,8 @@ def split_audio(
     if length is None:
         length = get_audio_length(path)
 
-    chunks = int(length // duration) + 1
-    names = [f"{output_dir}/{path.stem}-{i:03d}{extension}" for i in range(chunks)]
-    globname = f"{output_dir}/{path.stem}-*{extension}" 
+    # chunks = int(length // duration) + 1
+    globname = f"{output_dir}/{path.stem}-*{extension}"
 
     command = [
         "ffmpeg",
@@ -71,4 +73,4 @@ def split_audio(
     except subprocess.CalledProcessError as cpe:
         raise RuntimeError(f"FFMPEG command failed: {cpe}") from cpe
 
-    return names, chunks
+    return globname

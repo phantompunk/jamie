@@ -10,6 +10,7 @@ def get_audio_format(format: str):
     ext = {
         "mp3": "mp3/bestaudio/best",
         "m4a": "m4a/bestaudio/best",
+        "wav": "wav/bestaudio/best",
     }
     return ext.get(format)
 
@@ -54,34 +55,34 @@ def create_ydl_options(output: str, format: str, loglevel: str = "ERROR"):
     }
 
 
+def prepare_filename(filename, format, url, ydl) -> str:
+    if filename == FILENAME_TEMPLATE:
+        info_dict = ydl.extract_info(url, download=False)
+        info = ydl.sanitize_info(info_dict)
+        filename = ydl.prepare_filename(info)
+        return f"{filename}.{format}"
+    return f"{filename}.{format}"
+
+
 def download_audio(
     url: str,
-    output: Optional[str],
+    outtmpl: Optional[str],
     format: Optional[str],
 ):
     """Downloads audio from a YouTube video URL and returns the filename."""
 
     # TODO validate name output does not contain an extension
-    if not output:
-        output = FILENAME_TEMPLATE
+    if not outtmpl:
+        outtmpl = FILENAME_TEMPLATE
 
     # TODO validate format is supported
     if not format:
         format = "mp3"
 
     format = format.replace(".", "").lower()
-    ydl_opts = create_ydl_options(output, format)
+    ydl_opts = create_ydl_options(outtmpl, format)
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        # If output is the default template then get filename info
-        info_dict = ydl.extract_info(url, download=False)
-        info = ydl.sanitize_info(info_dict)
-        filename = ydl.prepare_filename(info)
-        if ".mp3" not in filename or ".m4a" not in filename:
-            filename = f"{filename}.{format}"
+        filename = prepare_filename(outtmpl, format, url, ydl)
         ydl.download([url])
-
-        length: float = 0.0
-        if info and type(info) is dict:
-            length = info.get("duration", None)
-        return filename, length
+        return filename
