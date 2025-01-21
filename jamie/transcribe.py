@@ -77,7 +77,7 @@ def process_audio(
 
     newfile = f"./{datafile}.json"
     sdata = [s.to_dict() for s in data]
-    with open(newfile, "w") as file:
+    with open(newfile, "w", encoding="utf-8") as file:
         json.dump(sdata, file, indent=4)
     return newfile
 

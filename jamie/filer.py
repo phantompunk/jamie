@@ -9,18 +9,47 @@ from jamie.model import Quote
 
 
 def read_json_quotes(filepath: str) -> List[Quote]:
+    """
+    Reads a list of JSON quotes from a file and returns them as a list of Quote objects.
+
+    Args:
+        filepath (str): The path to the file containing the JSON data.
+
+    Returns:
+        List[Quote]: A list of Quote objects parsed from the JSON data.
+    """
     with open(filepath, "r", encoding="utf-8") as infile:
         data = json.load(infile)
 
     return list(map(Quote.from_dict, data))
 
 
-def write_json_quotes(filepath, quotes: List[Quote]):
+def write_json_quotes(filepath: str, quotes: List[Quote]) -> None:
+    """
+    Writes a list of Quote objects to a JSON file.
+
+    Args:
+        filepath (str): The path to the file where the data will be written.
+        quotes (List[Quote]): A list of Quote objects to be serialized and written.
+
+    Returns:
+        None
+    """
     with open(filepath, "w", encoding="utf-8") as outfile:
         outfile.write(Quote.serialize_list(quotes))
 
 
 def merge_runoff(transcriptions: List[Quote]) -> List[Quote]:
+    """
+    Merges a list of Quote objects into a single combined object.
+
+    Args:
+        transcriptions (List[Quote]): A list of Quote objects to be merged.
+
+    Returns:
+        List[Quote]: The merged list of Quote objects.
+    """
+
     if not transcriptions:
         return []
 

@@ -1,7 +1,7 @@
-from dataclasses import dataclass, field, replace
-import json
-from datetime import datetime
 import hashlib
+import json
+from dataclasses import dataclass, field, replace
+from datetime import datetime
 from typing import Dict, Optional
 
 
@@ -55,6 +55,14 @@ class Quote:
         return json.dumps([quote.to_dict() for quote in quotes], indent=4)
 
     @staticmethod
+    def filter_by_length(quotes: list["Quote"], min_length: int = 25) -> list["Quote"]:
+        return [quote for quote in quotes if len(quote.quote) >= min_length]
+
+    @staticmethod
+    def filter_by_score(quotes: list["Quote"], min_score: int = 8) -> list["Quote"]:
+        return [quote for quote in quotes if len(quote.quote) >= min_score]
+
+    @staticmethod
     def combine(quotes: list["Quote"], current: "Quote") -> list["Quote"]:
         if quotes and quotes[-1].speaker == current.speaker:
             quotes[-1].quote += " " + current.quote
@@ -68,9 +76,9 @@ class Quote:
     ) -> "Quote":
         speaker = speaker_map.get(item.speaker, item.speaker)
         updated = {
-            "quote": item.quote,
             "speaker": speaker,
             "start": item.start,
+            "quote": item.quote,
             "created": item.created,
             "episode": episode if episode else item.episode,
             "link": link if link else item.link,

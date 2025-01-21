@@ -20,23 +20,29 @@ HELP_DURATION = "Split audio file into chunks by duration in seconds"
 HELP_SPEAKER = "Name of the speaker that matches the transcription"
 HELP_MODEL = "Name of the OLLAMA model to use"
 
+
 def validate_format(value: str):
     """Validates that the given format is either 'mp3' or 'm4a', case-insensitive and allowing a leading dot."""
     supported_formats = {"mp3", "wav"}
-    
+
     # Normalize input
     normalized_value = value.lower().lstrip(".")
 
     if normalized_value not in supported_formats:
-        raise typer.BadParameter(f"Invalid format: {value}. Supported formats: {', '.join(supported_formats)}")
-    
+        raise typer.BadParameter(
+            f"Invalid format: {value}. Supported formats: {', '.join(supported_formats)}"
+        )
+
     return normalized_value
+
 
 @app.command()
 def download(
     url: Annotated[str, typer.Argument(help=HELP_URL)],
     name: Annotated[Optional[str], typer.Option(help=HELP_NAME)] = None,
-    format: Annotated[Optional[str], typer.Option(help=HELP_FORMAT, callback=validate_format)] = None,
+    format: Annotated[
+        Optional[str], typer.Option(help=HELP_FORMAT, callback=validate_format)
+    ] = None,
 ):
     """
     Download audio from YouTube video
@@ -77,7 +83,9 @@ def process(
     url: Annotated[str, typer.Argument(help=HELP_URL)],
     duration: Annotated[int, typer.Option(help=HELP_DURATION)] = 300,
     name: Annotated[Optional[str], typer.Option(help=HELP_NAME)] = "",
-    format: Annotated[Optional[str], typer.Option(help=HELP_FORMAT, callback=validate_format)] = "mp3",
+    format: Annotated[
+        Optional[str], typer.Option(help=HELP_FORMAT, callback=validate_format)
+    ] = "mp3",
     episode: Annotated[Optional[str], typer.Option(help=HELP_EPISODE)] = None,
 ):
     """
@@ -124,7 +132,7 @@ def enhance(
 @app.command()
 def score(
     filename: Annotated[str, typer.Argument(help=HELP_NAME)],
-    model: Annotated[str, typer.Option(help=HELP_MODEL)] = "quote",
+    model: Annotated[Optional[str], typer.Option(help=HELP_MODEL)] = None,
 ):
     """
     WIP: Score quotes using custom LLM
