@@ -2,9 +2,14 @@ import json
 from pathlib import Path
 
 import ollama
-import os
 import re
 from tqdm import tqdm
+
+from jamie.filer import read_json_quotes, write_json_quotes
+from jamie.model import Quote
+
+DESC_SCORE = "Scoring quotes"
+DESC_RANK = "Ranking quotes"
 
 
 def extract_score(res: str):
@@ -16,73 +21,49 @@ def extract_score(res: str):
 
 def extract_quote(res: str):
     res = res.strip('"')
-    # print(f"Quote {res}")
     return res
-    # try:
-    #     return str(json.loads(res))
-    # except ValueError as e:
-    #     print(f"Error parsing JSON: {e}")
-    #     return re.sub(r"<(score|\/score)>", "", json.loads(res))
 
 
-def extract_best_quote(quote: dict, model: str = "quote"):
-    response = ollama.generate(
-        model=model, prompt=json.dumps(quote["quote"]), stream=False
-    )
-    score = extract_quote(response.get("response"))
-    if score != "SKIP":
-        quote.update(selected=score)
+def extract_best_quote(quote: Quote, model: str = "quote"):
+    response = ollama.generate(model=model, prompt=quote.quote, stream=False)
+    select = extract_quote(response.get("response"))
+    if select != "SKIP":
+        quote = quote.update(selected=select)
     return quote
 
-def rank_quote(quote: dict, model: str = "rank"):
-    if not quote.get("selected",""):
-        return quote
 
-    response = ollama.generate(
-        model=model, prompt=json.dumps(quote["selected"]), stream=False
-    )
+def rank_quote(quote: Quote, model: str = "rank"):
+    passage = quote.quote
+    if quote.selected:
+        passage = quote.selected
+
+    response = ollama.generate(model=model, prompt=passage, stream=False)
     score = extract_score(response.get("response"))
     if score != "SKIP":
-        quote.update(score=score)
+        quote = quote.update(score=score)
     return quote
+
+
+def prepare_filename(filename, model):
+    file = Path(filename)
+    model_suffix = "-score" if model == "quote" else "-ranked"
+    return f"{file.stem}{model_suffix}{file.suffix}"
+
+
+def process_quotes(quote, model):
+    if model == "quote":
+        return extract_best_quote(quote)
+    elif model == "rank":
+        return rank_quote(quote)
+    else:
+        raise ValueError(f"Invalid model: {model}")
 
 
 def score_quotes(filename: str, model: str = "quote"):
-    file = Path(filename)
-    if not file.exists():
-        raise FileNotFoundError(f"File '{filename}' not found.")
+    quotes = read_json_quotes(filename)
+    scored_filename = prepare_filename(filename, model)
+    desc = DESC_SCORE if model == "quote" else DESC_RANK
 
-    if not file.is_file():
-        raise IsADirectoryError(f"File '{filename}' is not a file.")
+    processed = [process_quotes(quote, model) for quote in tqdm(quotes, desc=desc)]
 
-    suffix = "-score" if model=="quote" else "-ranked"
-    new_filename = file.stem + suffix + file.suffix
-
-    # basepath = "./"
-    # if ".json" not in filename:
-    #     filename += ".json"
-    #     basepath = "./transcripts/"
-
-    with open(filename, "r+", encoding="utf-8") as file:
-        quotes = json.load(file)
-
-    for quote in tqdm(quotes, desc="Scoring quotes"):
-        if model == "quote":
-            quote = extract_best_quote(quote)
-        if model == "rank":
-            quote = rank_quote(quote)
-            # quote.update(selected=extract_quote(quote["quote"]))
-        # if model == "rank":
-        #     quote = rank_quote(quote.get("selected", ""))
-        # quote.update(score=rank_quote(quote["selected"]))
-        # response = ollama.generate(
-        #     model=model, prompt=json.dumps(quote["quote"]), stream=False
-        # )
-        # score = extract_quote(response.get("response"))
-        # if score != "SKIP":
-        #     quote.update(selected=score)
-
-    with open(new_filename, "w") as output:
-        json.dump(quotes, output, indent=4)
-    # print(json.dumps(quotes, indent=4))
-    return quotes
+    write_json_quotes(scored_filename, processed)
