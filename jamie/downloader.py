@@ -1,9 +1,26 @@
+import re
 from typing import Optional
 import yt_dlp
+
+from jamie.logger import logger
+
 
 EXTENSION_MP3 = "mp3/bestaudio/best"
 EXTENSION_M4A = "m4a/bestaudio/best"
 FILENAME_TEMPLATE = "%(title)s.%(ext)s"
+
+
+def is_valid_url(url):
+    youtube_regex = r"^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/)(?:(?:watch\?v=|embed\/)([A-Za-z0-9_-]{11})|(?:user\/[A-Za-z0-9_-]+)|(?:playlist\?list=)([A-Za-z0-9_-]{34})|(?:channel\/)([A-Za-z0-9_-]+))"
+    pattern = re.compile(youtube_regex)
+    match = pattern.match(url)
+    return bool(match)
+
+
+def is_supported_format(format: str):
+    supported = ["mp3", "m4a", "wav"]
+    format = format.lower().lstrip(".")
+    return format in supported
 
 
 def get_audio_format(format: str):
@@ -12,29 +29,7 @@ def get_audio_format(format: str):
         "m4a": "m4a/bestaudio/best",
         "wav": "wav/bestaudio/best",
     }
-    return ext.get(format)
-
-
-def yt_dlp_monitor(d):
-    return d.get("info_dict").get("_filename")
-
-
-def download_audio_with_duration(
-    url: str,
-    output: Optional[str],
-    format: Optional[str],
-):
-    """Downloads audio from a YouTube video URL and returns the filename and length in seconds."""
-    return download_audio(url, output, format)
-
-
-def download_audio_with_filename(
-    url: str,
-    output: Optional[str],
-    format: Optional[str],
-):
-    """Downloads audio from a YouTube video URL and returns the filename."""
-    return download_audio(url, output, format)[0]
+    return ext.get(format.lower().lstrip("."))
 
 
 def create_ydl_options(output: str, format: str, loglevel: str = "ERROR"):
@@ -46,6 +41,7 @@ def create_ydl_options(output: str, format: str, loglevel: str = "ERROR"):
         "outtmpl": output,
         "verbose": True,
         "loglevel": loglevel,
+        "logger": logger,
         "postprocessors": [
             {  # Extract audio using ffmpeg
                 "key": "FFmpegExtractAudio",
@@ -55,34 +51,38 @@ def create_ydl_options(output: str, format: str, loglevel: str = "ERROR"):
     }
 
 
-def prepare_filename(filename, format, url, ydl) -> str:
+def get_video_name(filename, format, url, ydl) -> str:
     if filename == FILENAME_TEMPLATE:
-        info_dict = ydl.extract_info(url, download=False)
-        info = ydl.sanitize_info(info_dict)
-        filename = ydl.prepare_filename(info)
-        return f"{filename}.{format}"
+        try:
+            info_dict = ydl.extract_info(url, download=False)
+            info = ydl.sanitize_info(info_dict)
+            filename = ydl.prepare_filename(info)
+            return f"{filename or 'unknown'}.{format}"
+        except Exception:
+            return f"unknown.{format}"
     return f"{filename}.{format}"
 
 
 def download_audio(
-    url: str,
-    outtmpl: Optional[str],
+    video_url: str,
+    output: Optional[str],
     format: Optional[str],
 ):
     """Downloads audio from a YouTube video URL and returns the filename."""
 
-    # TODO validate name output does not contain an extension
-    if not outtmpl:
-        outtmpl = FILENAME_TEMPLATE
+    if not is_valid_url(video_url):
+        raise ValueError(f"Invalid Youtube URL: {video_url}")
 
-    # TODO validate format is supported
-    if not format:
+    if not output:
+        output = FILENAME_TEMPLATE
+
+    if not format or not is_supported_format(format):
+        logger.info(f"Unsupported format: {format} using default 'mp3'")
         format = "mp3"
 
-    format = format.replace(".", "").lower()
-    ydl_opts = create_ydl_options(outtmpl, format)
+    ydl_opts = create_ydl_options(output, format)
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        filename = prepare_filename(outtmpl, format, url, ydl)
-        ydl.download([url])
+        filename = get_video_name(output, format, video_url, ydl)
+        ydl.download([video_url])
         return filename
