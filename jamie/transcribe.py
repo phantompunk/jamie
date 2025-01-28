@@ -1,11 +1,11 @@
 import glob
-import json
 import os
 import re
 from pathlib import Path
 from tqdm import tqdm
 
 
+from jamie.filer import write_json_quotes
 from jamie.logger import logger
 from jamie.model import Quote
 
@@ -43,43 +43,35 @@ def is_list(files) -> bool:
 
 def process_audio(
     pattern: str,
+    device: str,
+    model_dir: str,
+    max_speakers: int,
     duration: int = 300,
 ):
-    # determine if pattern is a file, list of files or glob
-    if is_glob(pattern):
-        files = glob.glob(pattern, recursive=True)
-        files.sort()
-    elif is_file(pattern):
-        files = [pattern]
-    else:
-        raise ValueError("error")
+    datafile = pattern.split("-*")[0] + ".json"
+    files = glob.glob(pattern, recursive=True)
+    files.sort()
 
     if not os.getenv("HUGGINGFACE_TOKEN"):
         raise EnvironmentError(
             "Required environment variable 'HUGGINGFACE_TOKEN' is not set."
         )
 
-    datafile = ""
     data = []
     for file in tqdm(files, desc="Transcribing audio files"):
         logger.info(f"Processing audio file: {file}")
         path = Path(file)
-        filename = f"{path.stem}.json"
-        audio = load_audio(file)
-        results = transcribe_audio(audio)
-        results = diarize_audio(audio, results)
-        start_at = extract_number(filename) * int(duration)
+        audio = load_audio(path.as_posix())
+        results = transcribe_audio(audio, device, model_dir=model_dir)
+        results = diarize_audio(
+            audio, results, device=device, max_speakers=max_speakers
+        )
+        start_at = extract_number(path.stem) * int(duration)
         segments = combine(results, start_at)
-
         data.extend(segments)
-        if not datafile:
-            datafile = path.stem[:-4]
 
-    newfile = f"./{datafile}.json"
-    sdata = [s.to_dict() for s in data]
-    with open(newfile, "w", encoding="utf-8") as file:
-        json.dump(sdata, file, indent=4)
-    return newfile
+    write_json_quotes(datafile, data)
+    return datafile
 
 
 def load_audio(file):

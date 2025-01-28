@@ -1,3 +1,4 @@
+import os
 import re
 from typing import Optional
 import yt_dlp
@@ -7,7 +8,7 @@ from jamie.logger import logger
 
 EXTENSION_MP3 = "mp3/bestaudio/best"
 EXTENSION_M4A = "m4a/bestaudio/best"
-FILENAME_TEMPLATE = "%(title)s.%(ext)s"
+FILENAME_TEMPLATE = "%(title)s/%(title)s.%(ext)s"
 
 
 def is_valid_url(url):
@@ -32,7 +33,10 @@ def get_audio_format(format: str):
     return ext.get(format.lower().lstrip("."))
 
 
-def create_ydl_options(output: str, format: str, loglevel: str = "ERROR"):
+def create_ydl_options(output: str, format: str, loglevel: str = "INFO"):
+    if output != FILENAME_TEMPLATE:
+        output = output.split(".")[0]
+
     return {
         "format": get_audio_format(format),
         "cookiefile": "cookies.txt",
@@ -56,7 +60,7 @@ def get_video_name(filename, format, url, ydl) -> str:
         try:
             info_dict = ydl.extract_info(url, download=False)
             info = ydl.sanitize_info(info_dict)
-            filename = ydl.prepare_filename(info)
+            filename = ydl.prepare_filename(info).split(".")[0]
             return f"{filename or 'unknown'}.{format}"
         except Exception:
             return f"unknown.{format}"
@@ -74,15 +78,18 @@ def download_audio(
         raise ValueError(f"Invalid Youtube URL: {video_url}")
 
     if not output:
-        output = FILENAME_TEMPLATE
+        filename = FILENAME_TEMPLATE
+    else:
+        name = output.split(".")[0]
+        filename = os.path.join(name, name)
 
     if not format or not is_supported_format(format):
         logger.info(f"Unsupported format: {format} using default 'mp3'")
         format = "mp3"
 
-    ydl_opts = create_ydl_options(output, format)
+    ydl_opts = create_ydl_options(filename, format)
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        filename = get_video_name(output, format, video_url, ydl)
+        filename = get_video_name(filename, format, video_url, ydl)
         ydl.download([video_url])
         return filename

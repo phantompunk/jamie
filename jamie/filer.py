@@ -109,6 +109,20 @@ def enhance(
     speaker1: Optional[str] = None,
     speaker2: Optional[str] = None,
 ):
+    """
+    Enhance a JSON file of quotes by updating the speakers and adding an optional link and episode.
+
+    Args:
+        filename (str): The path to the JSON file containing the quote data.
+        link (Optional[str], optional): The URL for the quoted text. Defaults to None.
+        episode (Optional[str], optional): The episode number where the quoted text can be found. Defaults to None.
+        speaker0 (Optional[str], optional): The speaker's name for quote 0. Defaults to None.
+        speaker1 (Optional[str], optional): The speaker's name for quote 1. Defaults to None.
+        speaker2 (Optional[str], optional): The speaker's name for quote 2. Defaults to None.
+
+    Returns:
+        None
+    """
     speakers_map = create_speakers_map(speaker0, speaker1, speaker2)
     quotes = read_json_quotes(filename)
     quotes = update_quotes(quotes, speakers_map, link, episode)
