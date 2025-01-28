@@ -1,6 +1,6 @@
+import os
 import subprocess
 from pathlib import Path
-from typing import List, Optional, Tuple
 from mutagen.mp3 import MP3
 from mutagen.m4a import M4A
 from mutagen.wave import WAVE
@@ -8,6 +8,26 @@ from mutagen.wave import WAVE
 
 SPLITNAME_TEMPLATE = "-%03d"
 DEFAULT_DURATION_SECONDS = 300
+
+
+def check_ffmpeg_installation():
+    """
+    Checks if FFMPEG is installed and accessible.
+
+    Raises:
+      RuntimeError: If FFMPEG is not found or encountered an error.
+    """
+    try:
+        subprocess.run(
+            ["ffmpeg", "-version"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=True,
+        )
+    except FileNotFoundError:
+        raise RuntimeError("FFMPEG is not installed or not in your system's PATH.")
+    except subprocess.CalledProcessError:
+        raise RuntimeError("FFMPEG encountered an error during version check.")
 
 
 def get_audio_length(path: Path) -> int:
@@ -24,17 +44,12 @@ def get_audio_length(path: Path) -> int:
 
 def split_audio(
     filename: str,
-    output: str = SPLITNAME_TEMPLATE,
-    output_dir: str = ".",
-    duration: Optional[int] = DEFAULT_DURATION_SECONDS,
-    length: Optional[float] = None,
+    duration: int = DEFAULT_DURATION_SECONDS,
 ) -> str:
     """
     Split an audio file into segments of a given duration using FFMPEG
     """
 
-    # TODO Validate that FFMPEG is available
-    # TODO Validate duration input
     path = Path(filename)
     if not path.exists():
         raise FileNotFoundError(f"File '{filename}' not found.")
@@ -46,14 +61,11 @@ def split_audio(
     if extension not in [".mp3", ".m4a", ".wav"]:
         raise ValueError("Unsupported file format. Only mp3 and m4a are supported.")
 
-    if duration is None:
-        duration = DEFAULT_DURATION_SECONDS
+    check_ffmpeg_installation()
 
-    if length is None:
-        length = get_audio_length(path)
-
-    # chunks = int(length // duration) + 1
-    globname = f"{output_dir}/{path.stem}-*{extension}"
+    globname = f"{path.stem}/{path.stem}-*{extension}"
+    if not os.path.exists(path.stem):
+        os.makedirs(path.stem)
 
     command = [
         "ffmpeg",
@@ -65,11 +77,16 @@ def split_audio(
         str(duration),
         "-c",
         "copy",
-        f"{output_dir}/{path.stem}{SPLITNAME_TEMPLATE}{extension}",
+        f"./{path.stem}/{path.stem}{SPLITNAME_TEMPLATE}{extension}",
     ]
 
     try:
-        subprocess.run(command, check=True)
+        subprocess.run(
+            command,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=True,
+        )
     except subprocess.CalledProcessError as cpe:
         raise RuntimeError(f"FFMPEG command failed: {cpe}") from cpe
 
